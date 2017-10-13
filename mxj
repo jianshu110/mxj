@@ -1,0 +1,246 @@
+#!/bin/bash
+set -e
+
+opts=""
+mode=""
+server_ip=""
+index=1
+RET=""
+count=0
+IMG_DIR=/home/pi/two_screen/pictures_dir/
+
+function debug()
+{
+    echo -e "\033[47;30mINFO: $*\033[0m"
+}
+
+function error()
+{
+    echo -e "\033[41;30mERROR: $*\033[0m"
+}
+
+function print_log()
+{
+    echo -e "\033[42;30m $*\033[0m"
+}
+
+function print_r()
+{
+   echo -e "\033[;31m $*\033[0m"
+}
+
+function print_g()
+{
+    echo -e "\033[;32m $*\033[0m"
+}
+
+
+function Check_temp()
+{
+	sudo tail -f /home/pi/log/stm32_client/temperature.log
+}
+
+function Check_vol()
+{
+	sudo tail -f /home/pi/log/stm32_client/voltage.log
+}
+
+function check_card_number()
+{
+	sudo tail -f /var/log/card_records.log
+}
+
+function Check_running_program()
+{
+sudo supervisorctl<<EOF
+exit
+EOF
+}
+
+function stop_card_reader()
+{
+sudo supervisorctl<<EOF
+stop device-controller
+exit
+EOF
+}
+function run_card_reader()
+{
+	sudo /opt/local/card_reader_adaptor_bin
+}
+
+function start_card_reader()
+{
+sudo supervisorctl<<EOF
+start device-controller
+exit
+EOF
+}
+
+function install_stm32_client()
+{
+	sudo rm -rf stm32_client/
+	sudo git clone https://github.com/jianshu110/stm32_client.git	
+	cd stm32_client/
+	sudo chmod +x ./install.sh
+	sudo ./install.sh
+	sleep 1
+	sudo./install.sh
+}
+
+function update_960_540()
+{
+	read -p "Will the system be upgraded to 960_540: YES ? NO:" RES
+	if [ "$RES" == "YES" ] ; then
+		cd /home/pi/
+		sudo git clone https://github.com/jianshu110/update_960_540.git
+		sudo mkdir boot_update
+		cd update_960_540
+		sudo mount /dev/nanda /home/pi/boot_update/
+		sudo mv /home/pi/boot_update/uImage /home/pi/boot_update/uImage.back_v2
+		sudo mv /home/pi/boot_update/script.bin /home/pi/boot_update/script.bin.back_v2
+		sudo cp -rf ./* /home/pi/boot_update/
+		sudo sync
+		sudo umount /dev/nanda
+		sudo reboot
+	else
+		exit 0 
+	fi
+}
+
+function repair_nandc()
+{
+	sudo /etc/init.d/cron stop
+	sudo /etc/init.d/supervisor stop 
+	sudo pkill chro
+	sudo fuser -ck  /dev/nandc
+	sleep 2
+	sudo fuser -ck  /dev/nandc
+	sleep 1
+	sudo umount /opt
+	sudo mkfs.ext4 /dev/nandc
+	sleep 1
+	sudo e2fsck -f -y /dev/nandc
+	sudo e2fsck -p /dev/nandc
+	sudo mount /dev/nandc /opt
+}
+function check_install_Cprog_error()
+{
+	if [ ! -f "/tmp/device_type" ] ; then
+		error "Not find /tmp/device_type"
+	fi	
+}
+
+printf_func()
+{
+	print_g "-------------------------------"
+	print_r "  1. Check the temperature\n"
+	print_r "  2. Check the voltage\n"
+	print_r "  3. Check the card number\n"
+	print_r "  4. Check the running program(supervisor)\n"
+	print_r "  5. stop card_reader(supervisor:device-controller)\n"
+	print_r "  6. run card_reader(user) \n"
+	print_r "  7. start card_reader(supervisor:device-controller)\n"
+	print_r "  8. install stm32_client\n"
+	print_r "  9. update to 960*540 (Do not operate!!!!)\n"
+	print_r " 10. repair nandc(a20)\n"
+	print_r " 11. Check C program installation failed (cause)"
+	print_g "-------------------------------"
+	count=12
+}
+
+
+select_func()
+{
+    
+    print_log "All valid func: "
+	printf_func
+   
+    while true; do
+        read -p "Please select a picture:" RES
+        RET=$RES
+		 if [ "$RES" == "" ]; then
+            break
+        fi
+        if [ "$RES" -le 0 ]; then
+            error "please use index number"
+            continue
+        fi
+        if [ "$RES" -ge $count ]; then
+             error "out of range !!"
+            continue
+        fi
+            
+        break
+    done
+
+}
+
+while true 
+do   
+
+   select_func
+ 
+   case "$RET" in
+	1)
+	print_g "temperature:"
+	Check_temp
+	print_g "ok"
+	exit 0
+	;;
+	2)
+	print_g "voltage:"
+	Check_vol
+	exit 0
+	;;
+	3)
+	print_g "card number:"
+	check_card_number
+	exit 0
+	;;
+	4)
+	print_g "running program:"
+	Check_running_program
+	exit 0
+	;;
+	5)
+	print_g "stop card_reader"
+	stop_card_reader
+	exit 0
+	;;
+	6)
+	print_g "run card_reader"
+	run_card_reader
+	exit 0
+	;;
+	7)
+	print_g "start card_reader"
+	start_card_reader
+	exit 0
+	;;
+	8)
+	print_g "install stm32 client ..."
+	install_stm32_client
+	exit 0
+	;;
+	9)print_g "update to 960*540 screen"
+	update_960_540
+	exit 0
+	;;
+	10)print_g "repair nandc(a20)"
+	repair_nandc
+	exit 0
+	;;
+	11)print_g "Check C program installation failed (cause)"
+	check_install_Cprog_error
+	exit 0
+	;;
+	*)
+	error "out of range !!"
+	exit 0
+   esac 
+done
+
+
+
+
