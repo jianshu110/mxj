@@ -259,7 +259,7 @@ do
 	;;
 	*)
 	12)print_g "update to 800*480_026_025"
-	check_install_Cprog_error
+	update_800_480_025_026
 	exit 0
 	;;
 	*)
