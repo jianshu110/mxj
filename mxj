@@ -165,7 +165,7 @@ printf_func()
 	print_r "  8. install stm32_client\n"
 	print_r "  9. update to 960*540 (Do not operate!!!!)\n"
 	print_r " 10. repair nandc(a20)\n"
-	print_r " 11. Check C program installation failed (cause)"
+	print_r " 11. Check C program installation failed (cause)\n"
 	print_r " 12. update to 800*480_026_025 (It's like a nanopi screen .Do not operate!!!!)\n"
 	print_g "-------------------------------"
 	count=13
@@ -257,7 +257,6 @@ do
 	check_install_Cprog_error
 	exit 0
 	;;
-	*)
 	12)print_g "update to 800*480_026_025"
 	update_800_480_025_026
 	exit 0
