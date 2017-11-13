@@ -131,6 +131,27 @@ function check_install_Cprog_error()
 	fi	
 }
 
+function update_800_480_025_026()
+{
+	read -p "Will the system be upgraded to 800_480_026_025: YES ? NO:" RES
+	if [ "$RES" == "YES" ] ; then
+		cd /home/pi/
+		sudo git clone https://github.com/jianshu110/upodate_480_026.git
+		sudo mkdir boot_update
+		cd upodate_480_026
+		sudo mount /dev/nanda /home/pi/boot_update/
+		sudo mv /home/pi/boot_update/uImage /home/pi/boot_update/uImage.back_v2
+		sudo mv /home/pi/boot_update/script.bin /home/pi/boot_update/script.bin.back_v2
+		sudo cp -rf ./* /home/pi/boot_update/
+		sudo sync
+		sudo umount /dev/nanda
+		sudo reboot
+	else
+		exit 0 
+	fi
+}
+
+
 printf_func()
 {
 	print_g "-------------------------------"
@@ -145,8 +166,9 @@ printf_func()
 	print_r "  9. update to 960*540 (Do not operate!!!!)\n"
 	print_r " 10. repair nandc(a20)\n"
 	print_r " 11. Check C program installation failed (cause)"
+	print_r " 12. update to 800*480_026_025 (It's like a nanopi screen .Do not operate!!!!)\n"
 	print_g "-------------------------------"
-	count=12
+	count=13
 }
 
 
@@ -232,6 +254,11 @@ do
 	exit 0
 	;;
 	11)print_g "Check C program installation failed (cause)"
+	check_install_Cprog_error
+	exit 0
+	;;
+	*)
+	12)print_g "update to 800*480_026_025"
 	check_install_Cprog_error
 	exit 0
 	;;
