@@ -200,7 +200,7 @@ select_func()
 
 while true 
 do   
-
+   git config --global http.sslverify false
    select_func
  
    case "$RET" in
